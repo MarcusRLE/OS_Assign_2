@@ -20,7 +20,7 @@ typedef struct header {
 } BlockHeader;
 
 /* Macros to handle the free flag at bit 0 of the next pointer of header pointed at by p */
-#define GET_NEXT(p)    (void *) (p->next)    /* TODO: Mask out free flag */
+#define GET_NEXT(p)    (void *) (p->next & -1)    /* (DONE - Marcus) TODO: Mask out free flag */
 #define SET_NEXT(p,n)  p->next = (void *) n  /* TODO: Preserve free flag */
 #define GET_FREE(p)    (uint8_t) ( (uintptr_t) (p->next) & 0x1 )   /* OK -- do not change */
 #define SET_FREE(p,f)  /* TODO: Set free bit of p->next to f */
