@@ -46,7 +46,13 @@ void simple_init() {
   if (first == NULL) {
     /* Check that we have room for at least one free block and an end header */
     if (aligned_memory_start + 2*sizeof(BlockHeader) + MIN_SIZE <= aligned_memory_end) {
-      /* TODO: Place first and last blocks and set links and free flags properly */
+      /* (DONE - Marcus) TODO: Place first and last blocks and set links and free flags properly */
+      first = (BlockHeader *) aligned_memory_start;
+      last = (BlockHeader *) aligned_memory_end - sizeof(BlockHeader);
+      SET_FREE(first,0);
+      SET_FREE(last,1);
+      SET_NEXT(first, last);
+      SET_NEXT(last, first);
     }
     current = first;     
   } 
