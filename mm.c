@@ -70,7 +70,13 @@ void* simple_malloc(size_t size) {
     if (first == NULL) return NULL;
   }
 
-  size_t aligned_size = size;  /* TODO: Alignment */
+    /* (DONE - MARCUS) TODO: Alignment */
+  size_t aligned_size;
+  if(size % 8 != 0) {
+    aligned_size = size + (8 - (size % 8));
+  } else {
+    aligned_size = size;
+  }
 
   /* Search for a free block */
   BlockHeader * search_start = current;
