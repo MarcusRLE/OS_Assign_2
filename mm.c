@@ -89,7 +89,13 @@ void* simple_malloc(size_t size) {
     if (first == NULL) return NULL;
   }
 
-  size_t aligned_size = size;  /* TODO: Alignment */
+    /* (DONE - Marcus) TODO: Alignment */
+  size_t aligned_size;
+  if(size % 8 != 0) {
+    aligned_size = size + (8 - (size % 8));
+  } else {
+    aligned_size = size;
+  }
 
   /* Search for a free block */
   BlockHeader * search_start = current;
@@ -103,12 +109,14 @@ void* simple_malloc(size_t size) {
       if (SIZE(current) >= aligned_size) {
         /* Will the remainder be large enough for a new block? */
         if (SIZE(current) - aligned_size < sizeof(BlockHeader) + MIN_SIZE) {
-          /* TODO: Use block as is, marking it non-free*/
+          /* (DONE - Marcus) TODO: Use block as is, marking it non-free*/
+          current->next = (void *) ((uintptr_t) current->next | 0x1);
         } else {
           /* TODO: Carve aligned_size from block and allocate new free block for the rest */
         }
-        
-        return (void *) NULL; /* TODO: Return address of current's user_block and advance current */
+        void * user_block = (void *) current->user_block;
+        current = GET_NEXT(current);
+        return (void *) user_block; /* (DONE - Marcus) TODO: Return address of current's user_block and advance current */
       }
     }
 
