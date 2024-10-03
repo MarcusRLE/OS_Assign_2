@@ -46,7 +46,26 @@ void simple_init() {
   if (first == NULL) {
     /* Check that we have room for at least one free block and an end header */
     if (aligned_memory_start + 2*sizeof(BlockHeader) + MIN_SIZE <= aligned_memory_end) {
-      /* TODO: Place first and last blocks and set links and free flags properly */
+      /* (DONE - Marcus) TODO: Place first and last blocks and set links and free flags properly */
+
+      // Placing the first block on first address of aligned memory
+      first = (BlockHeader *) aligned_memory_start;
+
+      // Placing the last (dummy) block (with user space 0 bytes) on the last 8 bytes of aligned memory space
+      last = (BlockHeader *) aligned_memory_end - sizeof(BlockHeader);
+
+      // Setting the free flag of the first (free) and last block (allocated)
+      SET_FREE(first,0);
+      SET_FREE(last,1);
+
+      /*
+       * Setting the next pointer of the first and last block.
+       * First blocks points to the last block, and the last block
+       * points to the first block, creating a circular linked list.
+       * First block will have user_block of size = (aligned memory - 2*sizeof(BlockHeader))
+       */
+      SET_NEXT(first, last);
+      SET_NEXT(last, first);
     }
     current = first;     
   } 
