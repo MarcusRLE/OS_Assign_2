@@ -111,7 +111,13 @@ void* simple_malloc(size_t size) {
  *
  */
 void simple_free(void * ptr) {
-  BlockHeader * block = NULL; /* TODO: Find block corresponding to ptr */
+    // Check if ptr is not 8-byte aligned or if ptr is within the memory area
+  if(!((uintptr_t) ptr & 0x7)
+  || ((uintptr_t) ptr > memory_end || (uintptr_t) ptr <= memory_start)){
+    return;
+  }
+
+  BlockHeader * block = ptr - 8; /*(DONE - Marcus) TODO: Find block corresponding to ptr */
   if (GET_FREE(block)) {
     /* Block is not in use -- probably an error */
     return;
