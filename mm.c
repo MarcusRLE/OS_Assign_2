@@ -25,7 +25,7 @@ typedef struct header {
 #define GET_FREE(p)    (uint8_t) ( (uintptr_t) (p->next) & 0x1 )   /* OK -- do not change */
 #define SET_NEXT(p,n)  p->next = (void *) ((uintptr_t) n + GET_FREE(p))  /* (DONE - Marcus): Preserve free flag */
 #define SET_FREE(p,f)  p->next = (void *) ((uintptr_t) GET_NEXT(p) | (f)) /* (DONE - Marcus): Set free bit of p->next to f */
-#define SIZE(p)        (size_t) ((uintptr_t) p - (uintptr_t) GET_NEXT(p)) /* TODO: Caluculate size of block from p and p->next */
+#define SIZE(p)        (size_t) ((uintptr_t) GET_NEXT(p) - (uintptr_t) p) /* TODO: Caluculate size of block from p and p->next */
 
 #define MIN_SIZE     (8)   // A block should have at least 8 bytes available for the user
 
@@ -99,6 +99,7 @@ void* simple_malloc(size_t size) {
   /* Search for a free block */
   BlockHeader * search_start = current;
   do {
+      printf("Size of current block: %ld\n", SIZE(current));
     if (GET_FREE(current)) {
 
       /* Possibly coalesce consecutive free blocks here */
@@ -122,6 +123,7 @@ void* simple_malloc(size_t size) {
         }
         void * user_block = (void *) current->user_block;
         current = GET_NEXT(current);
+          printf("Returning user block: %p\n", user_block);
         return (void *) user_block; /* (DONE - Marcus): Return address of current's user_block and advance current */
       }
     }
