@@ -156,8 +156,11 @@ void* simple_malloc(size_t size) {
  *
  */
 void simple_free(void * ptr) {
-    // Check if ptr is not 8-byte aligned or if ptr is within the memory area
-    BlockHeader * block = ptr - 8; /*(DONE - Marcus): Find block corresponding to ptr */
+    /*
+     * A guard could be implemented here to check if ptr is within the memory space
+     */
+    
+    BlockHeader * block = ptr - 8; /* Find block corresponding to ptr */
     if (GET_FREE(block)) {
         /* Block is not in use -- probably an error */
         return;
