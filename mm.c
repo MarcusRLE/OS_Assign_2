@@ -38,8 +38,8 @@ static BlockHeader * current = NULL;
  *
  */
 void simple_init() {
-  uintptr_t aligned_memory_start = memory_start;  /* TODO: Alignment */
-  uintptr_t aligned_memory_end   = memory_end;    /* TODO: Alignment */
+  uintptr_t aligned_memory_start = (memory_start + 7) & ~(7); 
+  uintptr_t aligned_memory_end   = memory_end & 7;    
   BlockHeader * last;
 
   /* Already initalized ? */
