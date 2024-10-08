@@ -25,7 +25,7 @@ typedef struct header {
 #define GET_FREE(p)    (uint8_t) ( (uintptr_t) (p->next) & 0x1 )   /* OK -- do not change */
 #define SET_NEXT(p,n)  p->next = (void *) ((uintptr_t) n + GET_FREE(p))  /* Preserve free flag */
 #define SET_FREE(p,f)  p->next = (void *) ((uintptr_t) GET_NEXT(p) | (f)) /* Set free bit of p->next to f */
-#define SIZE(p)        (size_t) ((uintptr_t) GET_NEXT(p) - (uintptr_t) p) /* Caluculate size of block from p and p->next */
+#define SIZE(p)        (size_t) ((uintptr_t) GET_NEXT(p) - (uintptr_t) p) /* Calculate size of block from p and p->next */
 
 #define MIN_SIZE     (8)   // A block should have at least 8 bytes available for the user
 
@@ -48,7 +48,6 @@ void simple_init() {
     if (first == NULL) {
         /* Check that we have room for at least one free block and an end header */
         if (aligned_memory_start + 2*sizeof(BlockHeader) + MIN_SIZE <= aligned_memory_end) {
-            /* Place first and last blocks and set links and free flags properly */
             // Placing the first block on first address of aligned memory
             first = (BlockHeader *) aligned_memory_start;
 
@@ -116,12 +115,23 @@ void* simple_malloc(size_t size) {
                 } else {
                     // Create new block at the end of the allocated user_block
                     BlockHeader * new_block = (BlockHeader *) ((uintptr_t) current->user_block + aligned_size);
+
                     // Insert new block into the linked list
                     new_block->next = current->next;
                     current->next = new_block;
+
+                    /*
+                     * Using following lines should result in the same as 2 lines above, but results
+                     * in a segmentation fault when running 'malloc_check'
+                     *
+                     * SET_NEXT(new_block, GET_NEXT(current));
+                     * SET_NEXT(current, new_block);
+                     */
+
                     // Set the free flag of current block to 0
                     SET_FREE(current, 0);
                 }
+
                 /* Return address of current's user_block and advance current */
                 void * user_block = (void *) current->user_block;
                 current = GET_NEXT(current);
