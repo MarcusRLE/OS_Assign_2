@@ -21,11 +21,11 @@ typedef struct header {
 } BlockHeader;
 
 /* Macros to handle the free flag at bit 0 of the next pointer of header pointed at by p */
-#define GET_NEXT(p)    (void *) ((uintptr_t) (p->next) & ~0x1)    /* (DONE - Marcus): Mask out free flag */
+#define GET_NEXT(p)    (void *) ((uintptr_t) (p->next) & ~0x1)    /* Mask out free flag */
 #define GET_FREE(p)    (uint8_t) ( (uintptr_t) (p->next) & 0x1 )   /* OK -- do not change */
-#define SET_NEXT(p,n)  p->next = (void *) ((uintptr_t) n + GET_FREE(p))  /* (DONE - Marcus): Preserve free flag */
-#define SET_FREE(p,f)  p->next = (void *) ((uintptr_t) GET_NEXT(p) | (f)) /* (DONE - Marcus): Set free bit of p->next to f */
-#define SIZE(p)        (size_t) ((uintptr_t) GET_NEXT(p) - (uintptr_t) p) /* TODO: Caluculate size of block from p and p->next */
+#define SET_NEXT(p,n)  p->next = (void *) ((uintptr_t) n + GET_FREE(p))  /* Preserve free flag */
+#define SET_FREE(p,f)  p->next = (void *) ((uintptr_t) GET_NEXT(p) | (f)) /* Set free bit of p->next to f */
+#define SIZE(p)        (size_t) ((uintptr_t) GET_NEXT(p) - (uintptr_t) p) /* Caluculate size of block from p and p->next */
 
 #define MIN_SIZE     (8)   // A block should have at least 8 bytes available for the user
 
@@ -48,7 +48,7 @@ void simple_init() {
     if (first == NULL) {
         /* Check that we have room for at least one free block and an end header */
         if (aligned_memory_start + 2*sizeof(BlockHeader) + MIN_SIZE <= aligned_memory_end) {
-            /* (DONE - Marcus): Place first and last blocks and set links and free flags properly */
+            /* Place first and last blocks and set links and free flags properly */
             // Placing the first block on first address of aligned memory
             first = (BlockHeader *) aligned_memory_start;
 
