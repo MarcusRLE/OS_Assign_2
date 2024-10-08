@@ -170,6 +170,9 @@ void simple_free(void * ptr) {
         BlockHeader * next = GET_NEXT(block);
         SET_NEXT(block, GET_NEXT(next));
     }
+
+    // Set original pointer value to NULL
+    ptr = NULL;
 }
 
 #include "mm_aux.c"
