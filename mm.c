@@ -7,6 +7,7 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "mm.h"
 
@@ -24,7 +25,7 @@ typedef struct header {
 #define GET_FREE(p)    (uint8_t) ( (uintptr_t) (p->next) & 0x1 )   /* OK -- do not change */
 #define SET_NEXT(p,n)  p->next = (void *) ((uintptr_t) n + GET_FREE(p))  /* (DONE - Marcus): Preserve free flag */
 #define SET_FREE(p,f)  p->next = (void *) ((uintptr_t) GET_NEXT(p) | (f)) /* (DONE - Marcus): Set free bit of p->next to f */
-#define SIZE(p)        (size_t) ((uintptr_t) p - (uintptr_t) p->next) /* TODO: Caluculate size of block from p and p->next */
+#define SIZE(p)        (size_t) ((uintptr_t) p - (uintptr_t) GET_NEXT(p)) /* TODO: Caluculate size of block from p and p->next */
 
 #define MIN_SIZE     (8)   // A block should have at least 8 bytes available for the user
 
@@ -39,7 +40,7 @@ static BlockHeader * current = NULL;
  */
 void simple_init() {
   uintptr_t aligned_memory_start = (memory_start + 0x7) & ~0x7; 
-  uintptr_t aligned_memory_end   = memory_end & 0x77;    
+  uintptr_t aligned_memory_end   = memory_end & ~0x7;
   BlockHeader * last;
 
   /* Already initalized ? */
@@ -82,7 +83,6 @@ void simple_init() {
  *
  */
 void* simple_malloc(size_t size) {
-  
   if (first == NULL) {
     simple_init();
     if (first == NULL) return NULL;
@@ -99,7 +99,6 @@ void* simple_malloc(size_t size) {
   /* Search for a free block */
   BlockHeader * search_start = current;
   do {
- 
     if (GET_FREE(current)) {
 
       /* Possibly coalesce consecutive free blocks here */
@@ -113,7 +112,7 @@ void* simple_malloc(size_t size) {
             SET_FREE(current, 0);
         } else {
             // Create new block at the end of the allocated user_block
-            BlockHeader * new_block = (BlockHeader *) ((uintptr_t) current + aligned_size);
+            BlockHeader * new_block = (BlockHeader *) ((uintptr_t) current->user_block + aligned_size);
             // Insert new block into the linked list
             new_block->next = current->next;
             current->next = new_block;
