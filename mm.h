@@ -8,6 +8,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 
 /**
@@ -37,5 +38,18 @@ extern const uintptr_t memory_start;
  * @brief   This points to the first address of memory you will NOT manage
  */
 extern const uintptr_t memory_end;
+
+/**
+ * @name    simple_macro_test
+ * @brief   Makes an internal test of the given macros
+ * @retval  0 if ok, otherwise a positive number indicating the error cause
+ */
+int simple_macro_test(void);
+
+/**
+ * @name    simple_block_dump
+ * @brief   Dumps the current list of blocks on standard out
+ */
+void simple_block_dump(void);
 
 
