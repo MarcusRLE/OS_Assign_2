@@ -159,7 +159,7 @@ void simple_free(void * ptr) {
     /*
      * A guard could be implemented here to check if ptr is within the memory space
      */
-    
+
     BlockHeader * block = ptr - 8; /* Find block corresponding to ptr */
     if (GET_FREE(block)) {
         /* Block is not in use -- probably an error */
