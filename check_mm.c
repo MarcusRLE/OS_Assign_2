@@ -276,6 +276,39 @@ START_TEST (test_memory_exerciser)
 
 END_TEST
 
+START_TEST (test_next_fit)
+{
+    void * ptr1;
+    void * ptr2;
+    void * ptr3;
+    void * ptr4;
+
+    // Allocate 3 blocks of 10 integers
+    ptr1 = MALLOC(10 * sizeof(int));
+    ptr2 = MALLOC(10 * sizeof(int));
+    ptr3 = MALLOC(10 * sizeof(int));
+
+    // Free the middle block (ptr2)
+    FREE(ptr2);
+
+    // Allocate a smaller block (5 integers)
+    ptr4 = MALLOC(5 * sizeof(int));
+
+    // In a first-fit strategy, ptr4 would be allocated where ptr2 was.
+    // But in a next-fit strategy, ptr4 should be allocated after ptr3.
+
+    ck_assert(ptr4 != ptr2); // Next-fit should not reuse ptr2
+
+    // Additional check to see if ptr4 is after ptr3
+    ck_assert(ptr4 > ptr3);
+
+    // Free all allocated memory
+    FREE(ptr1);
+    FREE(ptr3);
+    FREE(ptr4);
+}
+END_TEST
+
 /**
  * { You may provide more unit tests here, but remember to add them to simple_malloc_suite }
  */
@@ -293,6 +326,7 @@ Suite* simple_malloc_suite()
   tcase_add_test (tc_core, test_simple_allocation);
   tcase_add_test (tc_core, test_simple_unique_addresses);
   tcase_add_test (tc_core, test_memory_exerciser);
+  tcase_add_test (tc_core, test_next_fit);
 
   suite_add_tcase(s, tc_core);
   return s;
