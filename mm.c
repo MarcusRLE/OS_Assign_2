@@ -24,7 +24,7 @@ typedef struct header {
 #define GET_FREE(p)    (uint8_t) ( (uintptr_t) (p->next) & 0x1 )   /* OK -- do not change */
 #define SET_NEXT(p,n)  p->next = (void *) ((uintptr_t) n + GET_FREE(p))  /* (DONE - Marcus): Preserve free flag */
 #define SET_FREE(p,f)  p->next = (void *) ((uintptr_t) GET_NEXT(p) | (f)) /* (DONE - Marcus): Set free bit of p->next to f */
-#define SIZE(p)        (size_t) ( 0 ) /* TODO: Caluculate size of block from p and p->next */ 
+#define SIZE(p)        (size_t) ((uintptr_t) p - (uintptr_t) p->next) /* TODO: Caluculate size of block from p and p->next */
 
 #define MIN_SIZE     (8)   // A block should have at least 8 bytes available for the user
 
