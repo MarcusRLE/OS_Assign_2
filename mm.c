@@ -7,7 +7,7 @@
  */
 
 #include <stdint.h>
-
+#include <stdio.h>
 #include "mm.h"
 
 
@@ -24,7 +24,7 @@ typedef struct header {
 #define GET_FREE(p)    (uint8_t) ( (uintptr_t) (p->next) & 0x1 )   /* OK -- do not change */
 #define SET_NEXT(p,n)  p->next = (void *) ((uintptr_t) n + GET_FREE(p))  /* (DONE - Marcus): Preserve free flag */
 #define SET_FREE(p,f)  p->next = (void *) ((uintptr_t) GET_NEXT(p) | (f)) /* (DONE - Marcus): Set free bit of p->next to f */
-#define SIZE(p)        (size_t) ((uintptr_t) p - (uintptr_t) GET_NEXT(p)) /* (DONE - Marcus): Calculate size of block from p and p->next */
+#define SIZE(p)        (size_t)  ((uintptr_t) GET_NEXT(p) - (uintptr_t) p) /* (DONE - Marcus): Calculate size of block from p and p->next */
 
 #define MIN_SIZE     (8)   // A block should have at least 8 bytes available for the user
 
@@ -39,16 +39,21 @@ static BlockHeader * current = NULL;
  */
 void simple_init() {
     /* (DONE - Marcus): Alignment */
-    uintptr_t start_diff = memory_start & 0x7;
+    /*uintptr_t start_diff = memory_start % 8;
     uintptr_t aligned_memory_start;
   if(start_diff != 0) {
      aligned_memory_start = memory_start + (8 - start_diff);
   } else {
       aligned_memory_start = memory_start;
-  }
-  uintptr_t aligned_memory_end   = memory_end & ~0x8;
-  BlockHeader * last;
+  }*/
 
+  uintptr_t aligned_memory_start = (memory_start + 7) & ~0x7;
+  uintptr_t aligned_memory_end   = memory_end & ~0x7;
+  BlockHeader * last;
+    /*printf("Aligned memory start %p\n", (void *) aligned_memory_start);
+    printf("Aligned memory end %p\n", (void *) aligned_memory_end);*/
+    size_t size = aligned_memory_end - aligned_memory_start;
+    /*printf("Size divisible by 32 byte? Rest = %ld\n", size % (8*32));*/
   /* Already initalized ? */
   if (first == NULL) {
     /* Check that we have room for at least one free block and an end header */
@@ -89,20 +94,36 @@ void simple_init() {
  *
  */
 void* simple_malloc(size_t size) {
-  
+/*
+    printf("--------------------simple_malloc(%ld)-------------------\n", size);
+*/
   if (first == NULL) {
+/*
+      printf("Initializing memory\n");
+*/
     simple_init();
     if (first == NULL) return NULL;
   }
 
+/*
+    printf("Aligning size %ld\n", size);
+*/
+  size_t result = size % 8;
+/*
+    printf("result %ld\n", result);
+*/
     /* (DONE - Marcus): Alignment */
   size_t aligned_size;
-  if(size % 8 != 0) {
+  if((size & 0x7) != 0) {
+/*
+      printf("Size is not aligned\n");
+*/
     aligned_size = size + (8 - (size % 8));
   } else {
+     /* printf("Size is aligned\n");*/
     aligned_size = size;
   }
-
+    /*printf("Aligned size %ld\n", aligned_size);*/
   /* Search for a free block */
   BlockHeader * search_start = current;
   do {
@@ -120,7 +141,7 @@ void* simple_malloc(size_t size) {
             SET_FREE(current, 0);
         } else {
             // Create new block at the end of the allocated user_block
-            BlockHeader * new_block = (BlockHeader *) ((uintptr_t) current + aligned_size);
+            BlockHeader * new_block = (BlockHeader *) ((uintptr_t) current->user_block + aligned_size);
             // Insert new block into the linked list
             new_block->next = current->next;
             current->next = new_block;
@@ -129,7 +150,9 @@ void* simple_malloc(size_t size) {
           /* (DONE - Marcus): Carve aligned_size from block and allocate new free block for the rest */
         }
         void * user_block = (void *) current->user_block;
+          /*printf("Returning user_block address %p, from Blockheader @%p\n", user_block, current);*/
         current = GET_NEXT(current);
+          /*printf("--------------------------------------------------------\n");*/
         return (void *) user_block; /* (DONE - Marcus): Return address of current's user_block and advance current */
       }
     }
@@ -138,6 +161,8 @@ void* simple_malloc(size_t size) {
   } while (current != search_start);
 
  /* None found */
+    /*printf("No address found\n");
+    printf("-----------------------------------------------------------\n");*/
   return NULL;
 }
 
@@ -153,17 +178,21 @@ void* simple_malloc(size_t size) {
  */
 void simple_free(void * ptr) {
     // Check if ptr is not 8-byte aligned or if ptr is within the memory area
-  if(!((uintptr_t) ptr & 0x7)
+    /*printf("--------------------simple_free(%p)-------------------\n", ptr);*/
+  /*if(!((uintptr_t) ptr & 0x7)
   || ((uintptr_t) ptr > memory_end || (uintptr_t) ptr <= memory_start)){
+      printf("Invalid address\n");
     return;
-  }
+  }*/
 
   BlockHeader * block = ptr - 8; /*(DONE - Marcus): Find block corresponding to ptr */
   if (GET_FREE(block)) {
+     /* printf("Block is already free\n");*/
     /* Block is not in use -- probably an error */
     return;
   }
   /* (DONE - Marcus): Free block */
+    /*printf("Freeing block\n");*/
   SET_FREE(block, 0);
   /* Possibly coalesce consecutive free blocks here */
   if(GET_FREE(block->next)){

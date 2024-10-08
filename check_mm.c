@@ -35,7 +35,11 @@ uint32_t sum_block(uint32_t *data, uint32_t size)
   uint32_t n;
   for (n=0; n < (size) >> 2; n++) {
     sum ^= data[n];
+      /*if((n < 10) || (n > 10000 && n % 10000 == 0) || (n > (size >> 2) - 10)) {
+          printf("Extracting %d from index %d at address %p, with sum %d\n", data[n], n, &data[n], sum);
+      }*/
   }
+    /*printf("Sum of block is %d\n", sum);*/
   return sum;
 }
 
@@ -166,6 +170,7 @@ START_TEST (test_memory_exerciser)
     if ((blocks[clock].size>0) && (blocks[clock].size<(24*1024*1024))) {
 
 /* Try to allocate memory. */
+        /*printf("====================BLOCK %d====================\n", clock);*/
       addr = MALLOC(blocks[clock].size);
 
 /* Check if it was successful. */
@@ -187,11 +192,16 @@ START_TEST (test_memory_exerciser)
       {
         uint32_t sum = 0;
         uint32_t x;
+         /* printf("=================Inserting into block %d=================\n", clock);*/
         for (n=0; n < (blocks[clock].size) >> 2; n++) {
           x = (uint32_t) rand();
           blocks[clock].data[n] = x;
           sum ^= x;
+            /*if((n < 10) || (n > 10000 && n % 10000 == 0) || (n > ((blocks[clock].size) >> 2) - 10)) {
+                printf("Inserting %d into index %d at address %p, with sum %d\n", x, n, &blocks[clock].data[n], sum);
+            }*/
         }
+          /*printf("Sum of block %d is %d\n", clock, sum);*/
         blocks[clock].crc = sum;
       }
 
@@ -213,8 +223,10 @@ START_TEST (test_memory_exerciser)
       int all_ok = 1;
       for (n=0; n < 16; n++) {
         if (blocks[n].addr != NULL) {
+          /*printf("=================Extracting from block %d=================\n", n);*/
           uint32_t sum = sum_block(blocks[n].data, blocks[n].size);
-
+            /*printf("Original checksum: %d\n", blocks[n].crc);
+            printf("New checksum: %d\n", sum);*/
           if (blocks[n].crc != sum) {
             printf("Checksum failed for block %d at addr=%p: %08x != %08x\n",
               n, blocks[n].addr, blocks[n].crc, sum);
@@ -254,6 +266,7 @@ START_TEST (test_memory_exerciser)
         ck_assert_msg(all_ok, "Post-free memory block corruption found\n");
       }
     }
+      /*printf("#################### NEXT ITERATION ####################\n");*/
   }
 
 /* Free final blocks */
