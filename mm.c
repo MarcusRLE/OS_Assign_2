@@ -33,8 +33,6 @@ typedef struct header {
 static BlockHeader * first = NULL;
 static BlockHeader * current = NULL;
 
-int free_memory = 0;
-int allocated_blocks = 0;
 
 /**
  * @name    simple_init
@@ -46,7 +44,6 @@ void simple_init() {
     uintptr_t aligned_memory_end   = memory_end & ~0x7;
     BlockHeader * last;
 
-    printf("==================== ORIGINAL MEMORY %ld ====================\n", memory_end - memory_start);
     /* Already initalized ? */
     if (first == NULL) {
         /* Check that we have room for at least one free block and an end header */
@@ -73,8 +70,6 @@ void simple_init() {
         }
         current = first;
     }
-    free_memory = aligned_memory_end - aligned_memory_start;
-    printf("==================== Total memory space: %ld ====================\n", aligned_memory_end - aligned_memory_start);
 }
 
 
@@ -89,7 +84,6 @@ void simple_init() {
  *
  */
 void* simple_malloc(size_t size) {
-    int block_count = 0;
     if (first == NULL) {
         simple_init();
         if (first == NULL) return NULL;
@@ -102,26 +96,19 @@ void* simple_malloc(size_t size) {
     } else {
         aligned_size = size;
     }
-    printf("==================== ALLOCATING SIZE %ld ====================\n", aligned_size);
     /* Search for a free block */
     BlockHeader * search_start = current;
     do {
         if (GET_FREE(current)) {
-            block_count++;
             /* Coalescing consecutive free blocks */
             BlockHeader * next = GET_NEXT(current);
             while(GET_FREE(next)){
-                printf("Coalescing blocks\n");
                 // Coalesce
-                printf("block + next: %ld + %ld\n", SIZE(current), SIZE(next));
                 SET_NEXT(current, GET_NEXT(next));
-                printf("Merged block: %ld\n", SIZE(current));
-                printf("Is merged free: %d\n", GET_FREE(current));
                 next = GET_NEXT(next);
             }
             /* Check if free block is large enough */
             if (SIZE(current) >= aligned_size) {
-                printf("Size of current block: %ld\n", SIZE(current));
                 /* Will the remainder be large enough for a new block? */
                 if (SIZE(current) - aligned_size < sizeof(BlockHeader) + MIN_SIZE) {
                     /* Use block as is, marking it non-free*/
@@ -135,10 +122,10 @@ void* simple_malloc(size_t size) {
                     // Set the free flag of current block to 0
                     SET_FREE(current, 0);
                 }
+                /* Return address of current's user_block and advance current */
                 void * user_block = (void *) current->user_block;
                 current = GET_NEXT(current);
-                printf("Returning user block: %p\n", user_block);
-                return (void *) user_block; /* (DONE - Marcus): Return address of current's user_block and advance current */
+                return (void *) user_block;
             }
         }
 
@@ -146,8 +133,6 @@ void* simple_malloc(size_t size) {
     } while (current != search_start);
 
     /* None found */
-    printf("No free block found\n");
-    printf("Blocks searched %d\n", block_count);
     return NULL;
 }
 
@@ -163,26 +148,18 @@ void* simple_malloc(size_t size) {
  */
 void simple_free(void * ptr) {
     // Check if ptr is not 8-byte aligned or if ptr is within the memory area
-    printf("==================== FREEING BLOCK ====================\n");
     BlockHeader * block = ptr - 8; /*(DONE - Marcus): Find block corresponding to ptr */
     if (GET_FREE(block)) {
-        printf("Block is already free\n");
         /* Block is not in use -- probably an error */
         return;
     }
-    /* (DONE - Marcus): Free block */
-    printf("Freeing block\n");
+    /* Free block */
     SET_FREE(block, 1);
-    printf("Is block freed: %d\n", GET_FREE(block));
     /* Possibly coalesce consecutive free blocks here */
     if(GET_FREE(block->next)){
-        printf("Coalescing blocks\n");
         // Coalesce
         BlockHeader * next = GET_NEXT(block);
-        printf("block + next: %ld + %ld\n", SIZE(block), SIZE(next));
         SET_NEXT(block, GET_NEXT(next));
-        printf("Merged block: %ld\n", SIZE(block));
-        printf("Is merged free: %d\n", GET_FREE(block));
     }
 }
 
