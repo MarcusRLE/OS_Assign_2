@@ -1,42 +1,62 @@
 CC = gcc
 
-CCWARNINGS = -W -Wall -Wno-unused-parameter -Wno-unused-variable
-CCOPTS     = -std=c11 -g -O0
+CCWARNINGS = -W -Wall -Wno-unused-parameter -Wno-unused-variable \
+		-Wno-unused-function
+CCOPTS     = -g -O0 
 
 CFLAGS = $(CCWARNINGS) $(CCOPTS)
 
-TEST_SOURCES := test_mm.c mm.c memory_setup.c
-TEST_OBJECTS := $(TEST_SOURCES:.c=.o)
+LIB_SOURCES = aq_tsafe.c
+LIB_OBJECTS = $(LIB_SOURCES:.c=.o)
+LIB         = aq
+LIB_DIR     = mylib
+LIB_NAME     = lib$(LIB).a
 
-CHECK_SOURCES := check_mm.c mm.c memory_setup.c
-CHECK_OBJECTS := $(CHECK_SOURCES:.c=.o)
+LIB_SEQ_SOURCES = aq_seq.c
+LIB_SEQ_OBJECTS = $(LIB_SEQ_SOURCES:.c=.o)
+LIB_SEQ         = aq_seq
+LIB_SEQ_NAME    = lib$(LIB_SEQ).a
 
-APP_SOURCES := main.c io.c mm.c memory_setup.c
-APP_OBJECTS := $(APP_SOURCES:.c=.o)
+DEMO_SOURCES = aq_demo.c aux.c
+DEMO_OBJECTS = $(DEMO_SOURCES:.c=.o)
 
-TEST_EXECUTABLE = mm_test
-CHECK_EXECUTABLE = malloc_check
-APP_EXECUTABLE  = cmd_int
+TEST_FILE   ?= aq_test.c
+TEST_SOURCES = $(TEST_FILE) aux.c
+TEST_OBJECTS = $(TEST_SOURCES:.c=.o)
 
-.PHONY: all clean
+DEMO_EXECUTABLE = demo
+TEST_EXECUTABLE = test
 
-all: $(TEST_EXECUTABLE) $(CHECK_EXECUTABLE) $(APP_EXECUTABLE)
+EXECUTABLES = $(DEMO_EXECUTABLE) $(TEST_EXECUTABLE)
 
-%.o: %.c mm.h
+.PHONY:  all lib lib-seq clean clean-all
+
+all: lib lib-seq demo test  
+
+lib-seq: $(LIB_DIR)/$(LIB_SEQ_NAME)
+ 
+lib: $(LIB_DIR)/$(LIB_NAME)
+
+%.o: %.c 
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TEST_EXECUTABLE): $(TEST_OBJECTS)
-	$(CC) $(CFLAGS) $(TEST_OBJECTS) -o $@ 
+$(LIB_DIR)/$(LIB_NAME): $(LIB_OBJECTS)
+	mkdir -p $(LIB_DIR)
+	ar -rcs $@ $^
 
-$(CHECK_EXECUTABLE): $(CHECK_OBJECTS)
-	$(CC) $(CFLAGS) $(CHECK_OBJECTS) -o $@ -lcheck -lsubunit -lm
+$(LIB_DIR)/$(LIB_SEQ_NAME): $(LIB_SEQ_OBJECTS)
+	mkdir -p $(LIB_DIR)
+	ar -rcs $@ $^
 
-$(APP_EXECUTABLE): $(APP_OBJECTS)
-	$(CC) $(CFLAGS) $(APP_OBJECTS) -o $@
+$(DEMO_EXECUTABLE): lib-seq $(DEMO_OBJECTS)
+	$(CC) $(CFLAGS) $(DEMO_OBJECTS) -L$(LIB_DIR) -l$(LIB_SEQ) -o $@ 
 
-test: $(APP_EXECUTABLE)
-	./test.sh
+$(TEST_EXECUTABLE): lib $(TEST_OBJECTS)
+	$(CC) $(CFLAGS) $(TEST_OBJECTS) -lpthread -L$(LIB_DIR) -l$(LIB) -o $@ 
 
 clean:
-	rm -rf *o *~ $(TEST_EXECUTABLE) $(CHECK_EXECUTABLE) $(APP_EXECUTABLE)
+	rm -rf *.o *~ 
+
+clean-all: clean
+	rm -rf $(LIB_DIR) $(EXECUTABLES)
 
